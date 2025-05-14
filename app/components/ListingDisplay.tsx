@@ -1,26 +1,43 @@
 "use client";
 
 import { useState } from "react";
-import { getListing } from "../services/listingService";
+import { listingService } from "../services/listingService";
 import { Listing } from "@/lib/schemas/listing.schema";
 
 export default function ListingDisplay() {
-  const [listingId, setListingId] = useState("");
+  const [input, setInput] = useState("");
   const [listing, setListing] = useState<Listing | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   const fetchListing = async () => {
-    if (!listingId) {
-      setError("Please enter a listing ID");
+    if (!input) {
+      setError("Please enter a listing ID or URL");
       return;
     }
 
     setLoading(true);
     setError("");
+    
+    let listingId: string;
+    
+    // Determine if input is a URL or ID
+    if (input.includes('withgarage.com/listing/')) {
+      try {
+        listingId = listingService.extractListingIdFromUrl(input);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Invalid listing URL");
+        setListing(null);
+        setLoading(false);
+        return;
+      }
+    } else {
+      // Assume input is already an ID
+      listingId = input;
+    }
 
     try {
-      const response = await getListing(listingId);
+      const response = await listingService.getListing(listingId);
       setListing(response.result.listing);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to fetch listing");
@@ -38,9 +55,9 @@ export default function ListingDisplay() {
       <div className="flex gap-4">
         <input
           type="text"
-          value={listingId}
-          onChange={(e) => setListingId(e.target.value)}
-          placeholder="Enter listing ID"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          placeholder="Enter listing ID or URL"
           className="flex-1 p-2 border border-gray-300 rounded"
         />
         <button
@@ -70,10 +87,13 @@ export default function ListingDisplay() {
                 <li><span className="font-medium">Brand:</span> {listing.itemBrand}</li>
                 <li><span className="font-medium">Year:</span> {listing.itemAge}</li>
                 <li><span className="font-medium">Price:</span> ${listing.sellingPrice.toLocaleString()}</li>
-                <li><span className="font-medium">Dimensions:</span> {listing.itemLength}" × {listing.itemWidth}" × {listing.itemHeight}"</li>
-                <li><span className="font-medium">Weight:</span> {listing.itemWeight} lbs</li>
+                {(listing.itemLength && listing.itemWidth && listing.itemHeight) ? (
+                  <li><span className="font-medium">Dimensions:</span> {listing.itemLength}" × {listing.itemWidth}" × {listing.itemHeight}"</li>
+                ) : null}
+                {listing.itemWeight && <li><span className="font-medium">Weight:</span> {listing.itemWeight} lbs</li>}
                 {listing.tankSize && <li><span className="font-medium">Tank Size:</span> {listing.tankSize} gal</li>}
                 {listing.pumpSize && <li><span className="font-medium">Pump Size:</span> {listing.pumpSize} GPM</li>}
+                {listing.aerialLength && <li><span className="font-medium">Aerial Length:</span> {listing.aerialLength} ft</li>}
               </ul>
             </div>
             
