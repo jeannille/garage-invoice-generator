@@ -212,7 +212,6 @@ export const InvoicePDF = ({ listing }: { listing: Listing }) => (
       {listing.listingDescription && (
         <Text style={styles.description}>{listing.listingDescription}</Text>
       )}
-      <Text>Hello</Text>
     </Page>
   </Document>
 );
