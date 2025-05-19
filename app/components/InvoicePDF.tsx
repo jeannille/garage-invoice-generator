@@ -154,26 +154,26 @@ const DetailRow = ({
   </View>
 );
 
-
+const invoiceNumber = `INV-${Date.now().toString().slice(-6)}`; // Example: INV-123456
 
 // Main PDF Component
 export const InvoicePDF = ({ listing }: { listing: Listing }) => (
   <Document>
     <Page size="A4" style={styles.page}>
- 
-
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.headerLeft}>
             <Text style={styles.headerTitle}>Invoice</Text>
-            <Text style={styles.invoiceDetail}>Invoice #: 12345</Text>
-            <Text style={styles.invoiceDetail}>Date: 2024-05-16</Text>
+            <Text style={styles.invoiceDetail}> Invoice #: {invoiceNumber}</Text>
+            <Text style={styles.invoiceDetail}> Date: {new Date().toLocaleDateString()}</Text>
           </View>
           <View style={styles.headerRight}>
             <Image style={styles.logo} src="/images/with_garage.png" />
-            <Text style={styles.companyName}>Garage Inc.</Text>
-            <Text style={styles.companyDetail}>123 Main Street</Text>
-            <Text style={styles.companyDetail}>hello@garage.com</Text>
+            <Text style={styles.companyName}>Garage Technologies, Inc.</Text>
+            <Text style={styles.companyDetail}>637 Wyckoff Ave</Text>
+            <Text style={styles.companyDetail}>Wyckoff, NJ 07417</Text>
+            <Text style={styles.companyDetail}>support@withgarage.com</Text>
+            <Text style={styles.companyDetail}>(201) 293-7164</Text>
           </View>
         </View>
 
@@ -194,10 +194,10 @@ export const InvoicePDF = ({ listing }: { listing: Listing }) => (
   <DetailRow label="Brand" value={listing.itemBrand} />
   <DetailRow label="Item Age (years)" value={listing.itemAge} />
   <DetailRow label="Mileage" value={listing.mileage} />
-  <DetailRow label="Length" value={listing.itemLength} />
-  <DetailRow label="Width" value={listing.itemWidth} />
-  <DetailRow label="Height" value={listing.itemHeight} />
-  <DetailRow label="Weight" value={listing.itemWeight} />
+  <DetailRow label="Length" value={listing.itemLength ? `${listing.itemLength}"` : "-"} />
+  <DetailRow label="Width" value={listing.itemWidth ? `${listing.itemWidth}"` : "-"} />
+  <DetailRow label="Height" value={listing.itemHeight ? `${listing.itemHeight}"` : "-"} />
+  <DetailRow label="Weight" value={listing.itemWeight ? `${listing.itemWeight} lbs` : "-"} />
   <DetailRow label="VIN" value={listing.vin} />
 
   {/* Selling Price at the bottom with invoice style */}
@@ -212,7 +212,6 @@ export const InvoicePDF = ({ listing }: { listing: Listing }) => (
       {listing.listingDescription && (
         <Text style={styles.description}>{listing.listingDescription}</Text>
       )}
-      <Text>Hello</Text>
     </Page>
   </Document>
 );
