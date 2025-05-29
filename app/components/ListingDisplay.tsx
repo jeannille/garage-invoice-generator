@@ -94,8 +94,8 @@ export default function ListingDisplay() {
         <div className="p-4 bg-yellow-100 text-yellow-800 rounded border border-yellow-300 flex items-start gap-2">
           <AlertTriangle className="h-5 w-5 mt-0.5 flex-shrink-0" />
           <div>
-            <p className="font-medium">Using Demo Data</p>
-            <p className="text-sm">Server temporarily unavailable. Preview the invoice process using sample data, including PDF preview and email simulation below.</p>
+            <p className="font-medium">Invoice Preview Mode</p>
+            <p className="text-sm">The server is temporarily unavailable. Preview the complete invoice process using sample data, including PDF preview and email delivery below.</p>
           </div>
         </div>
       )}
