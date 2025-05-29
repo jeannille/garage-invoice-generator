@@ -1,5 +1,11 @@
 import { ListingResponse, ListingResponseSchema } from "@/lib/schemas/listing.schema";
+import { FALLBACK_LISTING } from "@/lib/fallback-data";
 import { z } from "zod";
+/*
+Service for handling listing details and API calls.
+Used to fetch a listing by ID or URL and return listing data.
+Has fallback data for when the API call fails.
+*/
 
 const API_BASE_URL = "https://garage-backend.onrender.com";
 
@@ -16,9 +22,9 @@ export const listingService = {
   /**
    * Fetches a listing by ID
    * @param id - UUID of the listing to fetch
-   * @returns listing json response from getListing API
+   * @returns listing json response from getListing API or fallback data if API fails
    */
-  async getListing(id: string): Promise<ListingResponse> {
+  async getListing(id: string): Promise<ListingResponse & { usingFallback?: boolean }> {
     try {
       const response = await fetch(`${API_BASE_URL}/getListing`, {
         method: "POST",
@@ -29,7 +35,12 @@ export const listingService = {
       });
 
       if (!response.ok) {
-        throw new Error(`Failed to fetch listing: ${response.statusText}`);
+        console.warn(`API request failed with status ${response.status}: ${response.statusText}. Using fallback data.`);
+        return {
+          result: { listing: FALLBACK_LISTING },
+          error: "",
+          usingFallback: true
+        };
       }
 
       const data = await response.json();
@@ -38,8 +49,12 @@ export const listingService = {
       const validatedData = ListingResponseSchema.parse(data);
       return validatedData;
     } catch (error) {
-      console.error("Error fetching listing:", error);
-      throw error;
+      console.warn("Error fetching listing, using fallback data:", error);
+      return {
+        result: { listing: FALLBACK_LISTING },
+        error: "",
+        usingFallback: true
+      };
     }
   },
 

@@ -64,7 +64,14 @@ export const ListingResponseSchema = z.object({
   error: z.string()
 });
 
+export const EmailInvoiceRequestSchema = z.object({
+  listing: ListingSchema,
+  userEmail: z.string().email(),
+  pdfBase64: z.string()
+});
+
 export type User = z.infer<typeof UserSchema>;
 export type CategoryV2 = z.infer<typeof CategoryV2Schema>;
 export type Listing = z.infer<typeof ListingSchema>;
-export type ListingResponse = z.infer<typeof ListingResponseSchema>; 
+export type ListingResponse = z.infer<typeof ListingResponseSchema>;
+export type EmailInvoiceRequest = z.infer<typeof EmailInvoiceRequestSchema>; 

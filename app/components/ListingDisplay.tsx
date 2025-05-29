@@ -3,16 +3,17 @@
 import { useState } from "react";
 import { listingService } from "../services/listingService";
 import { Listing } from "@/lib/schemas/listing.schema";
-import { InvoicePDF } from "./InvoicePDF";
-import { FileText, Download, X, Info, Search } from "lucide-react";
+import { InvoicePDF, InvoiceEmailForm } from "./InvoicePDF";
+import { FileText, X, Info, AlertTriangle } from "lucide-react";
 import { PDFViewer } from "@react-pdf/renderer";
-// import { PDFDownloadLink } from "@react-pdf/renderer";
+
 export default function ListingDisplay() {
   const [input, setInput] = useState("");
   const [listing, setListing] = useState<Listing | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [detailsExpanded, setDetailsExpanded] = useState(false);
+  const [usingFallback, setUsingFallback] = useState(false);
 
   const fetchListingAndShowPDF = async () => {
     if (!input) {
@@ -22,6 +23,7 @@ export default function ListingDisplay() {
 
     setLoading(true);
     setError("");
+    setUsingFallback(false);
 
     let listingId: string;
 
@@ -43,7 +45,14 @@ export default function ListingDisplay() {
     try {
       const response = await listingService.getListing(listingId);
       setListing(response.result.listing);
+      
+      // Check if we're using fallback data
+      if (response.usingFallback) {
+        setUsingFallback(true);
+        setError("Server temporarily unavailable. Showing demo data for testing purposes.");
+      }
     } catch (err) {
+      // This shouldn't happen anymore since we handle fallback in the service
       setError(err instanceof Error ? err.message : "Failed to fetch listing");
       setListing(null);
     } finally {
@@ -80,7 +89,19 @@ export default function ListingDisplay() {
         </button>
       </div>
 
-      {error && (
+      {/* Fallback warning */}
+      {usingFallback && (
+        <div className="p-4 bg-yellow-100 text-yellow-800 rounded border border-yellow-300 flex items-start gap-2">
+          <AlertTriangle className="h-5 w-5 mt-0.5 flex-shrink-0" />
+          <div>
+            <p className="font-medium">Using Demo Data</p>
+            <p className="text-sm">Server temporarily unavailable. Preview the invoice process using sample data, including PDF preview and email simulation below.</p>
+          </div>
+        </div>
+      )}
+
+      {/* regular error (for URL validation etc.) */}
+      {error && !usingFallback && (
         <div className="p-4 bg-red-100 text-red-700 rounded">{error}</div>
       )}
 
@@ -97,6 +118,9 @@ export default function ListingDisplay() {
                 <InvoicePDF listing={listing} />
               </PDFViewer>
             </div>
+
+            {/* Email Form Section */}
+            <InvoiceEmailForm listing={listing} />
 
             {/* Listing Details Section */}
             <div className="mt-8 pt-6 border-t border-gray-200">

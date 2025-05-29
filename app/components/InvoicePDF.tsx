@@ -8,8 +8,10 @@ import {
   StyleSheet,
   Image,
   Font,
+  pdf,
 } from "@react-pdf/renderer";
 import { Listing } from "@/lib/schemas/listing.schema";
+import { useState } from "react";
 
 // Register fonts
 Font.register({
@@ -156,6 +158,67 @@ const DetailRow = ({
 
 const invoiceNumber = `INV-${Date.now().toString().slice(-6)}`; // Example: INV-123456
 
+// email functionality hook for emailing invoice pdf to user
+export const useInvoiceEmail = () => {
+  const [isLoading, setIsLoading] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+  const [isError, setIsError] = useState(false);
+
+  const sendInvoiceEmail = async (listing: Listing, userEmail: string) => {
+    setIsLoading(true);
+    setMessage(null);
+    setIsError(false);
+
+    try {
+      // generate PDF on client side for now
+      setMessage('Generating PDF...');
+      const pdfBlob = await pdf(<InvoicePDF listing={listing} />).toBlob();
+      
+      // Convert blob to base64
+      const base64 = await new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const base64String = (reader.result as string).split(',')[1];
+          resolve(base64String);
+        };
+        reader.readAsDataURL(pdfBlob);
+      });
+
+      setMessage('Sending email...');
+      
+      const response = await fetch('/api/send-invoice', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          listing, 
+          userEmail, 
+          pdfBase64: base64 
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setMessage('Invoice sent successfully to your email!');
+        setIsError(false);
+      } else {
+        setMessage(data.error || 'Failed to send email');
+        setIsError(true);
+      }
+    } catch (error) {
+      console.error('Email error:', error);
+      setMessage('Failed to generate or send invoice. Please try again.');
+      setIsError(true);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return { sendInvoiceEmail, isLoading, message, isError };
+};
+
 // Main PDF Component
 export const InvoicePDF = ({ listing }: { listing: Listing }) => (
   <Document>
@@ -215,3 +278,52 @@ export const InvoicePDF = ({ listing }: { listing: Listing }) => (
     </Page>
   </Document>
 );
+
+// new email form component
+export const InvoiceEmailForm = ({ listing }: { listing: Listing }) => {
+  const [email, setEmail] = useState('');
+  const { sendInvoiceEmail, isLoading, message, isError } = useInvoiceEmail();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (email && listing) {
+      await sendInvoiceEmail(listing, email);
+    }
+  };
+
+  return (
+    <div className="mt-6 p-4 border rounded-lg bg-gray-50">
+      <h3 className="text-lg font-semibold mb-3">Email Invoice</h3>
+      <form onSubmit={handleSubmit} className="space-y-3">
+        <div>
+          <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+            Email Address
+          </label>
+          <input
+            type="email"
+            id="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+            placeholder="Enter your email address"
+            disabled={isLoading}
+          />
+        </div>
+        <button
+          type="submit"
+          disabled={isLoading || !email}
+          className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {isLoading ? 'Sending...' : 'Send Invoice to Email'}
+        </button>
+      </form>
+      
+      {message && (
+        <div className={`mt-3 p-3 rounded ${isError ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
+          {message}
+        </div>
+      )}
+    </div>
+  );
+};
