@@ -95,7 +95,7 @@ export default function ListingDisplay() {
           <AlertTriangle className="h-5 w-5 mt-0.5 flex-shrink-0" />
           <div>
             <p className="font-medium">Invoice Preview Mode</p>
-            <p className="text-sm">The server is temporarily unavailable. Preview the complete invoice process using sample data, including PDF preview and email delivery below.</p>
+            <p className="text-sm">The server is temporarily unavailable. Preview the complete invoice process using sample data, including PDF preview, download, and email delivery below.</p>
           </div>
         </div>
       )}
